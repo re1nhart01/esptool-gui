@@ -7,14 +7,14 @@ import { Button } from "@/components/ui/button";
 
 export function FlashScreen() {
   const [logs, setLogs] = useState("");
-  const [files, setFiles] = useState<(File | null)[]>([null, null, null]);
+  const [files, setFiles] = useState<(string | null)[]>([null, null, null]);
 
-  const selectFile = (index: number, file: File) => {
+  const selectFile = (index: number, file: string) => {
     const updated = [...files];
     updated[index] = file;
     setFiles(updated);
 
-    setLogs((prev) => prev + `Selected ${file.name}\n`);
+    setLogs((prev) => prev + `Selected ${file}\n`);
   };
 
   useEffect(() => {
