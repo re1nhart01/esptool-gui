@@ -19,6 +19,7 @@ pub fn run() {
             greet,
             app::tauri_execute_and_listen,
             app::tauri_free_listen_handle,
+            app::tauri_add_file_into_scope,
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");

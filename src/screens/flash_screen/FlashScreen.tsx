@@ -9,11 +9,15 @@ export function FlashScreen() {
   const [logs, setLogs] = useState("");
   const [files, setFiles] = useState<(string | null)[]>([null, null, null]);
 
-  const selectFile = (index: number, file: string) => {
+  const selectFile = async (label: string, index: number, file: string) => {
     const updated = [...files];
     updated[index] = file;
     setFiles(updated);
 
+    await invoke("tauri_add_file_into_scope", {
+      fileType: label,
+      filename: file,
+    });
     setLogs((prev) => prev + `Selected ${file}\n`);
   };
 
@@ -44,7 +48,7 @@ export function FlashScreen() {
           key={i}
           label={label}
           file={files[i]}
-          onSelect={(file) => selectFile(i, file)}
+          onSelect={async (file) => await selectFile(label, i, file)}
         />
       ))}
 
