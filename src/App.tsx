@@ -1,54 +1,38 @@
 import { useState } from "react";
-import reactLogo from "./assets/react.svg";
-import { invoke } from "@tauri-apps/api/core";
 import "./App.css";
-import { listen } from "@tauri-apps/api/event";
+import { Button } from "./components/ui/button";
+import { AboutDialog } from "./components/about_dialog";
+import { FlashScreen } from "./screens/flash_screen/FlashScreen";
+import { SettingsScreen } from "./screens/settings_screen/SetttingsScreen";
 
 function App() {
-  const [greetMsg, setGreetMsg] = useState("");
-  const [name, setName] = useState("");
-
-  async function greet() {
-    await listen("esp-tool-log", (event) => {
-      console.log("LOG:", event.payload);
-    });
-
-    await invoke("tauri_execute_and_listen", { filename: "zxc" });
-  }
+  const [tab, setTab] = useState<"flash" | "settings">("flash");
 
   return (
-    <main className="container">
-      <h1>Welcome to Tauri + React</h1>
+    <div className="w-full h-full p-4 space-y-4">
+      <div className="flex items-center gap-3">
+        <Button
+          variant={tab === "flash" ? "default" : "secondary"}
+          onClick={() => setTab("flash")}
+        >
+          Flash
+        </Button>
 
-      <div className="row">
-        <a href="https://vite.dev" target="_blank">
-          <img src="/vite.svg" className="logo vite" alt="Vite logo" />
-        </a>
-        <a href="https://tauri.app" target="_blank">
-          <img src="/tauri.svg" className="logo tauri" alt="Tauri logo" />
-        </a>
-        <a href="https://react.dev" target="_blank">
-          <img src={reactLogo} className="logo react" alt="React logo" />
-        </a>
+        <Button
+          variant={tab === "settings" ? "default" : "secondary"}
+          onClick={() => setTab("settings")}
+        >
+          ⚙ Налаштування
+        </Button>
+
+        <div className="ml-auto">
+          <AboutDialog />
+        </div>
       </div>
-      <p>Click on the Tauri, Vite, and React logos to learn more.</p>
 
-      <form
-        className="row"
-        onSubmit={(e) => {
-          e.preventDefault();
-          greet();
-        }}
-      >
-        <input
-          id="greet-input"
-          onChange={(e) => setName(e.currentTarget.value)}
-          placeholder="Enter a name..."
-        />
-        <button type="submit">Greet</button>
-      </form>
-      <p>{greetMsg}</p>
-    </main>
+      {tab === "flash" && <FlashScreen />}
+      {tab === "settings" && <SettingsScreen />}
+    </div>
   );
 }
 

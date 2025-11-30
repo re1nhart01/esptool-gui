@@ -8,7 +8,7 @@ use std::{
     thread::JoinHandle,
 };
 
-use tauri::{Emitter, Manager};
+use tauri::Emitter;
 
 pub static ESP_TOOL: OnceLock<Mutex<EspTool>> = OnceLock::new();
 
@@ -34,29 +34,26 @@ impl EspTool {
 
     pub fn execute_and_listen(&mut self, filename: String, app: tauri::AppHandle) {
         self.stop_flag.store(false, Ordering::Relaxed);
-
         let stop_flag = self.stop_flag.clone();
 
-        let exe = std::env::current_exe().unwrap();
-        let cwd = exe.parent().unwrap();
-
-        app.emit("esp-tool-log", cwd);
-
-        println!("CWD = {:?}", cwd);
-
         let handle = std::thread::spawn(move || {
-            let command = Command::new("sh")
+            let exe = std::env::current_exe().unwrap();
+            let cwd = exe.parent().unwrap();
+
+            let mut command = Command::new("sh")
                 .arg("stdout.sh")
                 .stdout(Stdio::piped())
+                // .current_dir(cwd)
                 .spawn()
                 .unwrap();
 
-            let stdout = command.stdout.unwrap();
+            let stdout = command.stdout.take().unwrap();
 
             let buff = BufReader::new(stdout);
 
             for line in buff.lines() {
                 if stop_flag.load(Ordering::Relaxed) {
+                    let _ = command.kill();
                     break;
                 }
 
