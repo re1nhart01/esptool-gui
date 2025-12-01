@@ -12,7 +12,7 @@ use std::{
 
 use tauri::Emitter;
 
-use crate::config::{About, Config};
+use crate::config::Config;
 
 pub static ESP_TOOL: OnceLock<Mutex<EspTool>> = OnceLock::new();
 const CONFIG_FILENAME: &str = "esp-gui.config.json";

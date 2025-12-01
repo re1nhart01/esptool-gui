@@ -46,9 +46,6 @@ impl Config {
             flash_size: String::from("8MB"),
         };
     }
-    pub fn get(&self) -> &Self {
-        return self;
-    }
 
     pub fn update_config(&mut self, new_cfg: Config, path: &Path) -> bool {
         *self = new_cfg;

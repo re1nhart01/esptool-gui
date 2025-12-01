@@ -1,4 +1,4 @@
-import { useEffect, memo, FC, Dispatch, SetStateAction } from "react";
+import { useEffect, memo, FC, Dispatch, SetStateAction, useRef } from "react";
 import { listen } from "@tauri-apps/api/event";
 import { invoke } from "@tauri-apps/api/core";
 import { FileDropZone } from "@/components/file_drop_zone";
@@ -14,6 +14,7 @@ type flashScreenProps = {
 
 export const FlashScreen: FC<flashScreenProps> = memo(
   ({ files, setFiles, logs, setLogs }) => {
+    const textareaRef = useRef<HTMLTextAreaElement>(null);
     const selectFile = async (label: string, index: number, file: string) => {
       const updated = [...files];
       updated[index] = file;
@@ -36,6 +37,12 @@ export const FlashScreen: FC<flashScreenProps> = memo(
       };
     }, []);
 
+    useEffect(() => {
+      if (textareaRef.current) {
+        textareaRef.current.scrollTop = textareaRef.current.scrollHeight;
+      }
+    }, [logs]);
+
     const handleFlash = async () => {
       setLogs((p) => p + "Flash started...\n");
       await invoke("tauri_execute_and_listen", { filename: "zxc" });
@@ -57,7 +64,12 @@ export const FlashScreen: FC<flashScreenProps> = memo(
           />
         ))}
 
-        <Textarea readOnly className="h-52 flex-1 min-h-0" value={logs} />
+        <Textarea
+          ref={textareaRef}
+          readOnly
+          className="h-52 flex-1 min-h-0"
+          value={logs}
+        />
 
         <Button className="w-full" onClick={handleFlash}>
           FLASH 🚀

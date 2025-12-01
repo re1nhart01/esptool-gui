@@ -22,7 +22,7 @@ export function SettingsScreen() {
 
   const [form, setForm] = useState<Config>({ ...ctx.value });
 
-  const updateField = (field: string, value: string | number) => {
+  const updateField = (field: string, value: string | number | string[]) => {
     setForm((prev) => ({
       ...prev,
       [field]: value,
@@ -44,7 +44,7 @@ export function SettingsScreen() {
   }, []);
 
   return (
-    <Card className="mt-40 w-full max-w-3xl mx-auto">
+    <Card className="mt-20 w-full max-w-3xl mx-auto">
       <CardHeader>
         <CardTitle>Flash Configuration</CardTitle>
       </CardHeader>
@@ -113,6 +113,26 @@ export function SettingsScreen() {
             <Input
               value={form.firmware_start}
               onChange={(e) => updateField("firmware_start", e.target.value)}
+            />
+          </div>
+
+          <div>
+            <Label>Flags Before</Label>
+            <Input
+              value={form.before_flags.join(" ")}
+              onChange={(e) =>
+                updateField("before_flags", e.target.value.split(" "))
+              }
+            />
+          </div>
+
+          <div>
+            <Label>Flags After</Label>
+            <Input
+              value={form.after_flags.join(" ")}
+              onChange={(e) =>
+                updateField("after_flags", e.target.value.split(" "))
+              }
             />
           </div>
         </div>
