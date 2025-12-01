@@ -1,6 +1,6 @@
 # ESP32 Firmware Flash Tool (with GUI)
 
-A cross‑platform GUI application built with **Tauri**, **Rust**, and **React (shadcn/ui)** to simplify flashing firmware onto **ESP32‑S3** devices.
+A cross‑platform GUI application built with **Tauri**, **Rust**, and **React (shadcn/ui)** to simplify flashing firmware onto **ESP32** devices.
 
 This tool allows you to:
 - Select Bootloader / Partition Table / Firmware binaries
