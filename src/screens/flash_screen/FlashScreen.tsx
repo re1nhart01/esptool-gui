@@ -1,4 +1,4 @@
-import { useState, useEffect, memo, FC, Dispatch, SetStateAction } from "react";
+import { useEffect, memo, FC, Dispatch, SetStateAction } from "react";
 import { listen } from "@tauri-apps/api/event";
 import { invoke } from "@tauri-apps/api/core";
 import { FileDropZone } from "@/components/file_drop_zone";

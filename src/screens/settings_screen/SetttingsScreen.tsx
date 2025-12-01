@@ -10,8 +10,7 @@ import { Input } from "@/components/ui/input";
 import { ConfigContext } from "@/context/ConfigContext";
 import { Config } from "@/types/types";
 import { Label } from "@radix-ui/react-label";
-import { invoke } from "@tauri-apps/api/core";
-import { useContext, useState } from "react";
+import { useContext, useEffect, useState } from "react";
 import { toast } from "sonner";
 
 export function SettingsScreen() {
@@ -32,19 +31,17 @@ export function SettingsScreen() {
 
   const handleSave = async () => {
     try {
-      await invoke("tauri_update_config_data", {
-        newCfg: form,
-        path: "esp-gui.config.json", // шлях до збереження
-      });
-
-      ctx.setValue(form);
+      await ctx.updateConfig(form);
       toast.success("Config saved!");
-      ctx.newInvalidation();
     } catch (err) {
       toast.error("Failed to save config");
       console.error(err);
     }
   };
+
+  useEffect(() => {
+    ctx.getInitialConfig();
+  }, []);
 
   return (
     <Card className="mt-40 w-full max-w-3xl mx-auto">
