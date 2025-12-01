@@ -1,4 +1,4 @@
-# ESP32S3 Firmware Flash Tool (with GUI)
+# ESP32 Firmware Flash Tool (with GUI)
 
 A cross‑platform GUI application built with **Tauri**, **Rust**, and **React (shadcn/ui)** to simplify flashing firmware onto **ESP32‑S3** devices.
 
