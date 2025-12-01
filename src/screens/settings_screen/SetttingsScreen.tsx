@@ -1,5 +1,129 @@
+import { Button } from "@/components/ui/button";
+import {
+  Card,
+  CardContent,
+  CardFooter,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
+import { Input } from "@/components/ui/input";
+import { ConfigContext } from "@/context/ConfigContext";
+import { Config } from "@/types/types";
+import { Label } from "@radix-ui/react-label";
+import { invoke } from "@tauri-apps/api/core";
+import { useContext, useState } from "react";
+import { toast } from "sonner";
+
 export function SettingsScreen() {
+  const ctx = useContext(ConfigContext);
+
+  if (!ctx || !ctx.value) {
+    return <p className="p-4 text-muted-foreground">Loading config...</p>;
+  }
+
+  const [form, setForm] = useState<Config>({ ...ctx.value });
+
+  const updateField = (field: string, value: string | number) => {
+    setForm((prev) => ({
+      ...prev,
+      [field]: value,
+    }));
+  };
+
+  const handleSave = async () => {
+    try {
+      await invoke("tauri_update_config_data", {
+        newCfg: form,
+        path: "esp-gui.config.json", // шлях до збереження
+      });
+
+      ctx.setValue(form);
+      toast.success("Config saved!");
+      ctx.newInvalidation();
+    } catch (err) {
+      toast.error("Failed to save config");
+      console.error(err);
+    }
+  };
+
   return (
-    <div className="text-center text-muted-foreground">Тут нічого нема</div>
+    <Card className="mt-40 w-full max-w-3xl mx-auto">
+      <CardHeader>
+        <CardTitle>Flash Configuration</CardTitle>
+      </CardHeader>
+
+      <CardContent className="space-y-4">
+        <div className="grid grid-cols-2 gap-4">
+          <div>
+            <Label>Chip</Label>
+            <Input
+              value={form.chip}
+              onChange={(e) => updateField("chip", e.target.value)}
+            />
+          </div>
+
+          <div>
+            <Label>Baud Rate</Label>
+            <Input
+              type="number"
+              value={form.baud_rate}
+              onChange={(e) => updateField("baud_rate", Number(e.target.value))}
+            />
+          </div>
+
+          <div>
+            <Label>Flash Mode</Label>
+            <Input
+              value={form.flash_mode}
+              onChange={(e) => updateField("flash_mode", e.target.value)}
+            />
+          </div>
+
+          <div>
+            <Label>Flash Size</Label>
+            <Input
+              value={form.flash_size}
+              onChange={(e) => updateField("flash_size", e.target.value)}
+            />
+          </div>
+
+          <div>
+            <Label>Flash Frequency</Label>
+            <Input
+              value={form.flash_freq}
+              onChange={(e) => updateField("flash_freq", e.target.value)}
+            />
+          </div>
+
+          <div>
+            <Label>Bootloader Offset</Label>
+            <Input
+              value={form.bootloader_start}
+              onChange={(e) => updateField("bootloader_start", e.target.value)}
+            />
+          </div>
+
+          <div>
+            <Label>Partition Offset</Label>
+            <Input
+              value={form.partition_start}
+              onChange={(e) => updateField("partition_start", e.target.value)}
+            />
+          </div>
+
+          <div>
+            <Label>Firmware Offset</Label>
+            <Input
+              value={form.firmware_start}
+              onChange={(e) => updateField("firmware_start", e.target.value)}
+            />
+          </div>
+        </div>
+      </CardContent>
+
+      <CardFooter className="justify-end">
+        <Button onClick={handleSave}>Save Configuration</Button>
+      </CardFooter>
+    </Card>
   );
 }

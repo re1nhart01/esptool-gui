@@ -1,4 +1,5 @@
 use std::{
+    fs,
     io::{BufRead, BufReader, Read},
     path::{Path, PathBuf},
     process::{Command, Stdio},
@@ -11,7 +12,10 @@ use std::{
 
 use tauri::Emitter;
 
+use crate::config::{About, Config};
+
 pub static ESP_TOOL: OnceLock<Mutex<EspTool>> = OnceLock::new();
+const CONFIG_FILENAME: &str = "esp-gui.config.json";
 
 pub struct EspTool {
     thread_handle: Option<JoinHandle<()>>,
@@ -72,6 +76,19 @@ impl EspTool {
             });
     }
 
+    fn get_config(&self) -> (Config, PathBuf) {
+        let exe = std::env::current_exe().unwrap();
+        let cwd = exe.parent().unwrap().join(CONFIG_FILENAME);
+        let data = fs::read_to_string(cwd.clone());
+
+        if let Ok(config_data) = data {
+            let config: Config = serde_json::from_str(&config_data).unwrap();
+            return (config, cwd);
+        }
+
+        return (Config::new(), cwd);
+    }
+
     pub fn execute_and_listen(&mut self, app: tauri::AppHandle) {
         if self.bootloader_path.is_empty()
             || self.partition_table.is_empty()
@@ -87,32 +104,35 @@ impl EspTool {
 
         let bootloader = self.bootloader_path.clone();
         let firmware = self.firmware_path.clone();
-        let partition = self.bootloader_path.clone();
+        let partition = self.partition_table.clone();
+
+        let config = self.get_config().0;
 
         let handle = std::thread::spawn(move || {
             println!("{}", curr_esptool.display());
             let mut command = Command::new(curr_esptool)
                 .args([
                     "--chip",
-                    "esp32s3",
+                    &config.chip,
                     "-b",
-                    "460800",
+                    &config.baud_rate.to_string(),
                     "--before",
-                    "default-reset",
-                    "--after",
-                    "hard-reset",
-                    "write-flash",
-                    "--flash-mode",
-                    "dio",
-                    "--flash-freq",
-                    "80m",
-                    "--flash-size",
-                    "8MB",
-                    "0x0",
+                ])
+                .args(&config.before_flags)
+                .args(["--after"])
+                .args(&config.after_flags)
+                .args([
+                    "--flash_mode",
+                    &config.flash_mode,
+                    "--flash_size",
+                    &config.flash_size,
+                    "--flash_freq",
+                    &config.flash_freq,
+                    &config.bootloader_start,
                     bootloader.as_str(),
-                    "0x8000",
+                    &config.partition_start,
                     partition.as_str(),
-                    "0x10000",
+                    &config.firmware_start,
                     firmware.as_str(),
                 ])
                 .stdout(Stdio::piped())
@@ -167,4 +187,18 @@ pub fn tauri_add_file_into_scope(file_type: String, filename: String) -> bool {
         .unwrap()
         .add_file_into_scope(file_type, filename);
     return true;
+}
+
+#[tauri::command]
+pub fn tauri_get_config_data() -> Config {
+    return ESP_TOOL.get().unwrap().lock().unwrap().get_config().0;
+}
+
+#[tauri::command]
+pub fn tauri_update_config_data(new_cfg: Config) -> bool {
+    let esptool = ESP_TOOL.get().unwrap().lock().unwrap();
+    let cwd = esptool.get_config().1;
+    let rs_path = Path::new(&cwd);
+
+    return esptool.get_config().0.update_config(new_cfg, &rs_path);
 }

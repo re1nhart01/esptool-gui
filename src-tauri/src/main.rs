@@ -1,6 +1,7 @@
 #![cfg_attr(not(debug_assertions), windows_subsystem = "windows")]
 
 mod app;
+mod config;
 
 use std::sync::Mutex;
 
@@ -20,6 +21,8 @@ pub fn run() {
             app::tauri_execute_and_listen,
             app::tauri_free_listen_handle,
             app::tauri_add_file_into_scope,
+            app::tauri_get_config_data,
+            app::tauri_update_config_data,
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");
@@ -29,5 +32,5 @@ fn main() {
     let api = app::EspTool::new();
     let _ = app::ESP_TOOL.set(Mutex::new(api));
 
-    run()
+    run();
 }

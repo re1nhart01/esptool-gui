@@ -7,9 +7,11 @@ import { SettingsScreen } from "./screens/settings_screen/SetttingsScreen";
 
 function App() {
   const [tab, setTab] = useState<"flash" | "settings">("flash");
+  const [files, setFiles] = useState<(string | null)[]>([null, null, null]);
+  const [logs, setLogs] = useState("");
 
   return (
-    <div className="w-full h-full p-4 space-y-4">
+    <div className="w-full p-4 space-y-4 max-h-screen">
       <div className="flex items-center gap-3">
         <Button
           variant={tab === "flash" ? "default" : "secondary"}
@@ -30,7 +32,14 @@ function App() {
         </div>
       </div>
 
-      {tab === "flash" && <FlashScreen />}
+      {tab === "flash" && (
+        <FlashScreen
+          files={files}
+          setFiles={setFiles}
+          logs={logs}
+          setLogs={setLogs}
+        />
+      )}
       {tab === "settings" && <SettingsScreen />}
     </div>
   );
