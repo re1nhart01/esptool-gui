@@ -128,7 +128,7 @@ impl EspTool {
         }
 
         let zipper = Zipper::new(self.state.archive_path.clone());
-
+        let _ = zipper.remove_temporary(format!("{}/esptool-gui-temp", self.state.archive_path));
         match zipper.unzip_temporary() {
             Ok(unpacked_dir) => {
                 let dir_str = match unpacked_dir.to_str() {
