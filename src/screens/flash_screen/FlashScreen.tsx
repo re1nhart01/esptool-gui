@@ -55,7 +55,7 @@ export const FlashScreen: FC<flashScreenProps> = memo(
 
     return (
       <div className="space-y-3">
-        {["Bootloader", "Partition Table", "Firmware"].map((label, i) => (
+        {["Archive"].map((label, i) => (
           <FileDropZone
             key={i}
             label={label}
@@ -67,7 +67,7 @@ export const FlashScreen: FC<flashScreenProps> = memo(
         <Textarea
           ref={textareaRef}
           readOnly
-          className="h-52 flex-1 min-h-0"
+          className="h-[60vh] flex-1 min-h-0"
           value={logs}
         />
 

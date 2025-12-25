@@ -16,5 +16,7 @@ export interface Config {
   bootloader_start: string;
   partition_start: string;
   firmware_start: string;
+  storage_start: string;
+  ota_initial_data_start: string;
   about: About;
 }

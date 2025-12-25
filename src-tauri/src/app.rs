@@ -12,16 +12,25 @@ use std::{
 
 use tauri::Emitter;
 
-use crate::config::Config;
+use crate::{config::Config, constants, zipper::Zipper};
 
 pub static ESP_TOOL: OnceLock<Mutex<EspTool>> = OnceLock::new();
 const CONFIG_FILENAME: &str = "esp-gui.config.json";
 
-pub struct EspTool {
-    thread_handle: Option<JoinHandle<()>>,
+#[derive(Clone, Debug)]
+struct EspToolState {
     bootloader_path: String,
     firmware_path: String,
-    partition_table: String,
+    partition_table_path: String,
+    archive_path: String,
+    storage_path: String,
+    ota_data_initial_path: String,
+    unpacked_dir: String,
+}
+
+pub struct EspTool {
+    thread_handle: Option<JoinHandle<()>>,
+    state: EspToolState,
     stop_flag: Arc<AtomicBool>,
 }
 
@@ -30,9 +39,15 @@ impl EspTool {
         return Self {
             thread_handle: None,
             stop_flag: Arc::new(AtomicBool::new(true)),
-            bootloader_path: String::from(""),
-            firmware_path: String::from(""),
-            partition_table: String::from(""),
+            state: EspToolState {
+                bootloader_path: String::from(""),
+                firmware_path: String::from(""),
+                partition_table_path: String::from(""),
+                archive_path: String::from(""),
+                storage_path: String::from(""),
+                ota_data_initial_path: String::from(""),
+                unpacked_dir: String::from(""),
+            },
         };
     }
 
@@ -44,12 +59,20 @@ impl EspTool {
     }
 
     pub fn add_file_into_scope(&mut self, file_type: String, filename: String) -> bool {
-        if file_type == "Bootloader" {
-            self.bootloader_path = filename;
-        } else if file_type == "Partition Table" {
-            self.partition_table = filename;
-        } else if file_type == "Firmware" {
-            self.firmware_path = filename;
+        if file_type == constants::ESP_FILE_TYPE_BOOTLOADER {
+            self.state.bootloader_path = filename;
+        } else if file_type == constants::ESP_FILE_TYPE_PARTITION_TABLE {
+            self.state.partition_table_path = filename;
+        } else if file_type == constants::ESP_FILE_TYPE_FIRMWARE {
+            self.state.firmware_path = filename;
+        } else if file_type == constants::ESP_FILE_TYPE_ARCHIVE {
+            self.state.archive_path = filename;
+        } else if file_type == constants::ESP_FILE_TYPE_STORAGE {
+            self.state.storage_path = filename;
+        } else if file_type == constants::ESP_FILE_TYPE_OTA_DATA_INITIAL {
+            self.state.ota_data_initial_path = filename;
+        } else if file_type == constants::ESP_FILE_TYPE_UNPACKED_DIR {
+            self.state.unpacked_dir = filename;
         }
 
         return true;
@@ -90,9 +113,63 @@ impl EspTool {
     }
 
     pub fn execute_and_listen(&mut self, app: tauri::AppHandle) {
-        if self.bootloader_path.is_empty()
-            || self.partition_table.is_empty()
-            || self.firmware_path.is_empty()
+        if self.state.archive_path.is_empty() {
+            return;
+        }
+
+        let zipper = Zipper::new(self.state.archive_path.clone());
+
+        match zipper.unzip_temporary() {
+            Ok(unpacked_dir) => {
+                let dir_str = match unpacked_dir.to_str() {
+                    Some(s) => s.to_string(),
+                    None => {
+                        let _ = app.emit("esp-tool-log", "Invalid UTF-8 path");
+                        return;
+                    }
+                };
+
+                self.add_file_into_scope(
+                    String::from(constants::ESP_FILE_TYPE_BOOTLOADER),
+                    format!("{}/bootloader.bin", dir_str),
+                );
+
+                self.add_file_into_scope(
+                    String::from(constants::ESP_FILE_TYPE_FIRMWARE),
+                    format!("{}/firmware.bin", dir_str),
+                );
+
+                self.add_file_into_scope(
+                    String::from(constants::ESP_FILE_TYPE_PARTITION_TABLE),
+                    format!("{}/partition-table.bin", dir_str),
+                );
+
+                self.add_file_into_scope(
+                    String::from(constants::ESP_FILE_TYPE_STORAGE),
+                    format!("{}/storage.bin", dir_str),
+                );
+
+                self.add_file_into_scope(
+                    String::from(constants::ESP_FILE_TYPE_OTA_DATA_INITIAL),
+                    format!("{}/ota_data_initial.bin", dir_str),
+                );
+
+                self.add_file_into_scope(
+                    String::from(constants::ESP_FILE_TYPE_UNPACKED_DIR),
+                    format!("{}", dir_str),
+                );
+            }
+
+            Err(err) => {
+                let _ = app.emit("esp-tool-log", err);
+            }
+        }
+
+        if self.state.bootloader_path.is_empty()
+            || self.state.partition_table_path.is_empty()
+            || self.state.firmware_path.is_empty()
+            || self.state.storage_path.is_empty()
+            || self.state.ota_data_initial_path.is_empty()
         {
             return;
         }
@@ -102,10 +179,7 @@ impl EspTool {
 
         let curr_esptool = self.get_esptool_executor();
 
-        let bootloader = self.bootloader_path.clone();
-        let firmware = self.firmware_path.clone();
-        let partition = self.partition_table.clone();
-
+        let state = self.state.clone();
         let config = self.get_config().0;
 
         let handle = std::thread::spawn(move || {
@@ -129,11 +203,15 @@ impl EspTool {
                     "--flash_freq",
                     &config.flash_freq,
                     &config.bootloader_start,
-                    bootloader.as_str(),
+                    &state.bootloader_path,
                     &config.partition_start,
-                    partition.as_str(),
+                    &state.partition_table_path,
+                    &config.ota_initial_data_start,
+                    &state.ota_data_initial_path,
                     &config.firmware_start,
-                    firmware.as_str(),
+                    &state.firmware_path,
+                    &config.storage_start,
+                    &state.storage_path,
                 ])
                 .stdout(Stdio::piped())
                 .stderr(Stdio::piped())
@@ -155,6 +233,20 @@ impl EspTool {
                 }
 
                 let _ = app.emit("esp-tool-log", line.unwrap());
+            }
+            let _ = command.wait();
+
+            let dir = state.unpacked_dir.clone();
+            if let Err(e) = zipper.remove_temporary(dir.clone()) {
+                let _ = app.emit(
+                    "esp-tool-log",
+                    format!("Failed to cleanup temp dir {}: {}", dir, e),
+                );
+            } else {
+                let _ = app.emit(
+                    "esp-tool-log",
+                    format!("Temporary directory cleaned: {}", dir),
+                );
             }
         });
 

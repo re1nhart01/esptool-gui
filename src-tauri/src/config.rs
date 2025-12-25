@@ -22,6 +22,8 @@ pub struct Config {
     pub bootloader_start: String,
     pub partition_start: String,
     pub firmware_start: String,
+    pub storage_start: String,
+    pub ota_initial_data_start: String,
     pub about: About,
 }
 
@@ -40,10 +42,12 @@ impl Config {
             bootloader_start: String::from("0x0"),
             partition_start: String::from("0x8000"),
             chip: String::from("esp32s3"),
-            firmware_start: String::from("0x10000"),
+            firmware_start: String::from("0x20000"),
             flash_freq: String::from("80m"),
             flash_mode: String::from("dio"),
             flash_size: String::from("8MB"),
+            storage_start: String::from("0x320000"),
+            ota_initial_data_start: String::from("0x10000"),
         };
     }
 

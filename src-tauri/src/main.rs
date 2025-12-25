@@ -2,6 +2,8 @@
 
 mod app;
 mod config;
+mod constants;
+mod zipper;
 
 use std::sync::Mutex;
 
