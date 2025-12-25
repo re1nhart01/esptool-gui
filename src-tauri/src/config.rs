@@ -2,7 +2,7 @@ use std::{fs, path::Path};
 
 use serde::{Deserialize, Serialize};
 
-#[derive(Debug, Deserialize, Serialize)]
+#[derive(Debug, Deserialize, Serialize, Clone)]
 pub struct About {
     pub name: String,
     pub version: String,
@@ -10,7 +10,7 @@ pub struct About {
     pub date_of_release: String,
 }
 
-#[derive(Debug, Deserialize, Serialize)]
+#[derive(Debug, Deserialize, Serialize, Clone)]
 pub struct Config {
     pub chip: String,
     pub baud_rate: u32,
@@ -32,9 +32,9 @@ impl Config {
         return Self {
             about: About {
                 author: String::from("Eugene Kokaiko"),
-                date_of_release: String::from("01.01.1970"),
+                date_of_release: String::from("25.12.2025"),
                 name: String::from("ESP_FLASH-GUI"),
-                version: String::from("0.0.1"),
+                version: String::from("0.0.4"),
             },
             after_flags: vec![String::from("hard_reset"), String::from("write_flash")],
             before_flags: vec![String::from("default_reset")],
@@ -49,6 +49,24 @@ impl Config {
             storage_start: String::from("0x320000"),
             ota_initial_data_start: String::from("0x10000"),
         };
+    }
+
+    pub fn exists(path: &Path) -> bool {
+        path.exists()
+    }
+
+    pub fn write_default(path: &Path) -> bool {
+        let cfg = Config::new();
+
+        match serde_json::to_string_pretty(&cfg) {
+            Ok(cfg_json) => {
+                if fs::write(path, cfg_json).is_ok() {
+                    return true;
+                }
+            }
+            Err(_) => return false,
+        }
+        return true;
     }
 
     pub fn update_config(&mut self, new_cfg: Config, path: &Path) -> bool {

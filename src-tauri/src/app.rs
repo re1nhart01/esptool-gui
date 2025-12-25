@@ -112,6 +112,16 @@ impl EspTool {
         return (Config::new(), cwd);
     }
 
+    pub fn initial_create_config_file(&mut self) {
+        let path = self.get_config().1;
+
+        if !Config::exists(&path) {
+            if Config::write_default(&path) {
+                eprintln!("Failed to create config");
+            }
+        }
+    }
+
     pub fn execute_and_listen(&mut self, app: tauri::AppHandle) {
         if self.state.archive_path.is_empty() {
             return;
