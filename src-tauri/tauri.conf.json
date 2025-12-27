@@ -14,7 +14,9 @@
       {
         "title": "esptool-gui",
         "width": 1280,
-        "height": 850
+        "height": 850,
+        "minWidth": 1280,
+        "minHeight": 880
       }
     ],
     "security": {
@@ -23,6 +25,16 @@
   },
   "plugins": {},
   "bundle": {
+    "windows": {
+      "wix": {
+        "fragmentPaths": [
+          "windows\\fragments\\vendor.wxs"
+        ],
+        "componentGroupRefs": [
+          "VendorFiles"
+        ]
+      }
+    },
     "active": true,
     "targets": "all",
     "icon": [

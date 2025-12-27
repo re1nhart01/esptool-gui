@@ -117,6 +117,24 @@ export function SettingsScreen() {
           </div>
 
           <div>
+            <Label>OTA Data Initial Offset</Label>
+            <Input
+              value={form.ota_initial_data_start}
+              onChange={(e) =>
+                updateField("ota_initial_data_start", e.target.value)
+              }
+            />
+          </div>
+
+          <div>
+            <Label>Storage Offset</Label>
+            <Input
+              value={form.storage_start}
+              onChange={(e) => updateField("storage_start", e.target.value)}
+            />
+          </div>
+
+          <div>
             <Label>Flags Before</Label>
             <Input
               value={form.before_flags.join(" ")}

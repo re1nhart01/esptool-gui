@@ -20,7 +20,7 @@ export function FileDropZone({ label, file, onSelect }: Props) {
     try {
       const filepath = await open({
         multiple: false,
-        filters: [{ name: "Bin Files", extensions: ["bin"] }],
+        filters: [{ name: "Bin Files", extensions: ["zip"] }],
       });
       if (typeof filepath === "string") onSelect(filepath);
     } catch (e) {
@@ -31,7 +31,7 @@ export function FileDropZone({ label, file, onSelect }: Props) {
   const selectByDrop = async (file: File | null) => {
     if (!file) return;
 
-    if (!file.name.endsWith(".bin")) {
+    if (!file.name.endsWith(".zip")) {
       alert("Only .bin files allowed!");
       return;
     }

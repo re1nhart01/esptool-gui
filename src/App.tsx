@@ -24,7 +24,7 @@ function App() {
           variant={tab === "settings" ? "default" : "secondary"}
           onClick={() => setTab("settings")}
         >
-          ⚙ Налаштування
+          ⚙ Settings
         </Button>
 
         <div className="ml-auto">
