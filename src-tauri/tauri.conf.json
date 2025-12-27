@@ -25,6 +25,16 @@
   },
   "plugins": {},
   "bundle": {
+    "windows": {
+      "wix": {
+        "fragmentPaths": [
+          "windows\\fragments\\vendor.wxs"
+        ],
+        "componentGroupRefs": [
+          "VendorFiles"
+        ]
+      }
+    },
     "active": true,
     "targets": "all",
     "icon": [

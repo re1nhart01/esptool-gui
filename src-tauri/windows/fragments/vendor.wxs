@@ -1,0 +1,38 @@
+<?xml version="1.0" encoding="utf-8"?>
+<Wix xmlns="http://schemas.microsoft.com/wix/2006/wi">
+  <Fragment>
+    <ComponentGroup Id="VendorFiles">
+      <ComponentRef Id="EsptoolExe" />
+      <ComponentRef Id="EspefuseExe" />
+      <ComponentRef Id="EspsecureExe" />
+      <ComponentRef Id="EspRfc2217Exe" />
+      <ComponentRef Id="EsptoolLicense" />
+      <ComponentRef Id="EsptoolReadme" />
+    </ComponentGroup>
+
+    <DirectoryRef Id="INSTALLDIR">
+      <Directory Id="VendorDir" Name="vendor">
+        <Directory Id="EsptoolWinDir" Name="esptool-windows-x86_64">
+          <Component Id="EsptoolExe" Guid="*">
+            <File Source="..\..\..\..\..\vendor\esptool-windows-x86_64\esptool.exe" KeyPath="yes" Checksum="yes" />
+          </Component>
+          <Component Id="EspefuseExe" Guid="*">
+            <File Source="..\..\..\..\..\vendor\esptool-windows-x86_64\espefuse.exe" KeyPath="yes" Checksum="yes" />
+          </Component>
+          <Component Id="EspsecureExe" Guid="*">
+            <File Source="..\..\..\..\..\vendor\esptool-windows-x86_64\espsecure.exe" KeyPath="yes" Checksum="yes" />
+          </Component>
+          <Component Id="EspRfc2217Exe" Guid="*">
+            <File Source="..\..\..\..\..\vendor\esptool-windows-x86_64\esp_rfc2217_server.exe" KeyPath="yes" Checksum="yes" />
+          </Component>
+          <Component Id="EsptoolLicense" Guid="*">
+            <File Source="..\..\..\..\..\vendor\esptool-windows-x86_64\LICENSE" KeyPath="yes" />
+          </Component>
+          <Component Id="EsptoolReadme" Guid="*">
+            <File Source="..\..\..\..\..\vendor\esptool-windows-x86_64\README.md" KeyPath="yes" />
+          </Component>
+        </Directory>
+      </Directory>
+    </DirectoryRef>
+  </Fragment>
+</Wix>
