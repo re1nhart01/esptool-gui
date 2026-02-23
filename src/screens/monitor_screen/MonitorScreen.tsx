@@ -1,20 +1,23 @@
-import { useEffect, memo, FC, useRef, useState } from "react";
+import { useEffect, memo, FC, useRef, useState, useCallback } from "react";
 import { listen } from "@tauri-apps/api/event";
 import { invoke } from "@tauri-apps/api/core";
 import { Textarea } from "@/components/ui/textarea";
 import { Button } from "@/components/ui/button";
 import { FileDropZone } from "@/components/file_drop_zone";
-import { SerialPort } from "@/types/types";
 
 type monitorScreenProps = {
  
 };
+
+const BOTTOM_THRESHOLD_PX = 60;
 
 export const MonitorScreen: FC<monitorScreenProps> = memo(
   ({ }) => {
     const textareaRef = useRef<HTMLTextAreaElement>(null);
     const [monitorLogs, setMonitorLogs] = useState("");
     const [files, setFiles] = useState<(string | null)[]>([null, null, null]);
+    const timeoutId = useRef<ReturnType<typeof setTimeout>>(null);
+    const [isScrollLocked, setScrollLocked] = useState(false);
 
 
     const selectFile = async (label: string, index: number, file: string) => {
@@ -40,10 +43,28 @@ export const MonitorScreen: FC<monitorScreenProps> = memo(
     }, []);
 
     useEffect(() => {
-      if (textareaRef.current) {
-        textareaRef.current.scrollTop = textareaRef.current.scrollHeight;
-      }
-    }, [monitorLogs]);
+        const el = textareaRef.current;
+        if (!el) return;
+
+        if (!isScrollLocked) {
+        el.scrollTop = el.scrollHeight;
+        }
+    }, [monitorLogs, isScrollLocked]);
+
+
+
+    const isNearBottom = useCallback((el: HTMLTextAreaElement) => {
+        const distance =
+        el.scrollHeight - el.scrollTop - el.clientHeight;
+        return distance <= BOTTOM_THRESHOLD_PX;
+    }, []);
+
+    const handleOnScroll = useCallback(() => {
+        const el = textareaRef.current;
+        if (!el) return;
+
+        setScrollLocked(!isNearBottom(el));
+    }, [isNearBottom]);
 
     
 
@@ -76,6 +97,7 @@ export const MonitorScreen: FC<monitorScreenProps> = memo(
           readOnly
           className="h-[55vh] flex-1 min-h-0"
           value={monitorLogs}
+          onScroll={handleOnScroll}
         />
 
         <Button className="w-full" onClick={handleRunMonitor}>

@@ -1,6 +1,9 @@
-use std::{fs, path::Path};
+use std::{fs, path::{Path, PathBuf}};
 
 use serde::{Deserialize, Serialize};
+
+
+const CONFIG_FILENAME: &str = "esp-gui.config.json";
 
 #[derive(Debug, Deserialize, Serialize, Clone)]
 pub struct About {
@@ -26,7 +29,6 @@ pub struct Config {
     pub ota_initial_data_start: String,
     pub about: About,
     pub monitor_baud: String,
-    pub monitor_port: String,
 }
 
 impl Config {
@@ -50,8 +52,7 @@ impl Config {
             flash_size: String::from("8MB"),
             storage_start: String::from("0x320000"),
             ota_initial_data_start: String::from("0x10000"),
-            monitor_baud: String::from(""),
-            monitor_port: String::from("115200")
+            monitor_baud: String::from("115200"),
         };
     }
 
@@ -87,3 +88,17 @@ impl Config {
         false
     }
 }
+
+
+pub fn get_config() -> (Config, PathBuf) {
+        let exe = std::env::current_exe().unwrap();
+        let cwd = exe.parent().unwrap().join(CONFIG_FILENAME);
+        let data = fs::read_to_string(cwd.clone());
+
+        if let Ok(config_data) = data {
+            let config: Config = serde_json::from_str(&config_data).unwrap();
+            return (config, cwd);
+        }
+
+        return (Config::new(), cwd);
+    }

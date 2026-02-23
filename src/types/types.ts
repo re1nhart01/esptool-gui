@@ -19,6 +19,7 @@ export interface Config {
   storage_start: string;
   ota_initial_data_start: string;
   about: About;
+  monitor_baud: string;
 }
 
 

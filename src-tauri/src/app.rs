@@ -12,12 +12,10 @@ use std::{
 
 use tauri::{Emitter};
 
-use crate::{config::Config, constants, monitor::Monitor, serial::get_list_serial_ports, zipper::Zipper};
+use crate::{config::{self, Config}, constants, monitor::Monitor, serial::get_list_serial_ports, zipper::Zipper};
 
 pub static ESP_TOOL: OnceLock<Mutex<EspTool>> = OnceLock::new();
 pub static ESP_MONITOR: OnceLock<Mutex<Monitor>> = OnceLock::new();
-
-const CONFIG_FILENAME: &str = "esp-gui.config.json";
 
 #[derive(Clone, Debug)]
 struct EspToolState {
@@ -107,21 +105,8 @@ impl EspTool {
             });
     }
 
-    fn get_config(&self) -> (Config, PathBuf) {
-        let exe = std::env::current_exe().unwrap();
-        let cwd = exe.parent().unwrap().join(CONFIG_FILENAME);
-        let data = fs::read_to_string(cwd.clone());
-
-        if let Ok(config_data) = data {
-            let config: Config = serde_json::from_str(&config_data).unwrap();
-            return (config, cwd);
-        }
-
-        return (Config::new(), cwd);
-    }
-
     pub fn initial_create_config_file(&mut self) {
-        let path = self.get_config().1;
+        let path = config::get_config().1;
 
         if !Config::exists(&path) {
             if Config::write_default(&path) {
@@ -208,7 +193,7 @@ impl EspTool {
         let curr_esptool = self.get_esptool_executor();
 
         let state = self.state.clone();
-        let config = self.get_config().0;
+        let config = config::get_config().0;
 
         let handle = std::thread::spawn(move || {
             println!("{}", curr_esptool.display());
@@ -329,16 +314,15 @@ pub fn tauri_add_file_into_scope(file_type: String, filename: String) -> bool {
 
 #[tauri::command]
 pub fn tauri_get_config_data() -> Config {
-    return ESP_TOOL.get().unwrap().lock().unwrap().get_config().0;
+    return config::get_config().0;
 }
 
 #[tauri::command]
 pub fn tauri_update_config_data(new_cfg: Config) -> bool {
-    let esptool = ESP_TOOL.get().unwrap().lock().unwrap();
-    let cwd = esptool.get_config().1;
+    let cwd = config::get_config().1;
     let rs_path = Path::new(&cwd);
 
-    return esptool.get_config().0.update_config(new_cfg, &rs_path);
+    return config::get_config().0.update_config(new_cfg, &rs_path);
 }
 
 #[tauri::command]
@@ -347,7 +331,7 @@ pub fn tauri_monitor_start(app_handle: tauri::AppHandle) {
 
     let mut monitor = ESP_MONITOR.get().unwrap().lock().unwrap();
 
-    monitor.set_baudrate(app.get_config().0.monitor_baud);
+    monitor.set_baudrate(config::get_config().0.monitor_baud);
     monitor.set_firmware_elf(app.state.firmware_elf.clone());
 
     monitor.execute_and_listen(app_handle);

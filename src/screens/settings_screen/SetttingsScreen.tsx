@@ -153,6 +153,15 @@ export function SettingsScreen() {
               }
             />
           </div>
+          <div>
+            <Label>Monitor Baud</Label>
+            <Input
+              value={form.monitor_baud}
+              onChange={(e) =>
+                updateField("monitor_baud", e.target.value)
+              }
+            />
+          </div>
         </div>
       </CardContent>
 
