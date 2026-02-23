@@ -16,9 +16,15 @@ export const MonitorScreen: FC<monitorScreenProps> = memo(
     const textareaRef = useRef<HTMLTextAreaElement>(null);
     const [monitorLogs, setMonitorLogs] = useState("");
     const [files, setFiles] = useState<(string | null)[]>([null, null, null]);
-    const timeoutId = useRef<ReturnType<typeof setTimeout>>(null);
     const [isScrollLocked, setScrollLocked] = useState(false);
 
+
+    const stripAnsi = (input: string) =>
+        input.replace(
+            // eslint-disable-next-line no-control-regex
+            /\u001b\[[0-9;?]*[ -/]*[@-~]/g,
+            ""
+    );
 
     const selectFile = async (label: string, index: number, file: string) => {
       const updated = [...files];
@@ -34,7 +40,7 @@ export const MonitorScreen: FC<monitorScreenProps> = memo(
 
     useEffect(() => {
       const unlistenPromise = listen<string>("esp-tool-monitor", (e) => {
-        setMonitorLogs((prev) => prev + e.payload);
+        setMonitorLogs((prev) => prev + stripAnsi(e.payload));
       });
 
       return () => {
@@ -109,7 +115,7 @@ export const MonitorScreen: FC<monitorScreenProps> = memo(
         </Button>
 
         <Button className="w-full bg-blue-800" onClick={handleCancel}>
-          CANCEL
+          STOP
         </Button>
       </div>
     );
