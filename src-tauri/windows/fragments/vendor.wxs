@@ -8,28 +8,42 @@
       <ComponentRef Id="EspRfc2217Exe" />
       <ComponentRef Id="EsptoolLicense" />
       <ComponentRef Id="EsptoolReadme" />
+      <ComponentRef Id="EspIdfMonitor" />
+      <ComponentRef Id="EspIdfLicense" />
+      <ComponentRef Id="EspIdfReadme" />
     </ComponentGroup>
 
     <DirectoryRef Id="INSTALLDIR">
       <Directory Id="VendorDir" Name="vendor">
         <Directory Id="EsptoolWinDir" Name="esptool-windows-x86_64">
           <Component Id="EsptoolExe" Guid="*">
-            <File Source="..\..\..\..\..\vendor\esptool-windows-x86_64\esptool.exe" KeyPath="yes" Checksum="yes" />
+            <File Id="EsptoolExeFile" Source="..\..\..\..\..\vendor\esptool-windows-x86_64\esptool.exe" KeyPath="yes" Checksum="yes" />
           </Component>
           <Component Id="EspefuseExe" Guid="*">
-            <File Source="..\..\..\..\..\vendor\esptool-windows-x86_64\espefuse.exe" KeyPath="yes" Checksum="yes" />
+            <File Id="EspefuseExeFile" Source="..\..\..\..\..\vendor\esptool-windows-x86_64\espefuse.exe" KeyPath="yes" Checksum="yes" />
           </Component>
           <Component Id="EspsecureExe" Guid="*">
-            <File Source="..\..\..\..\..\vendor\esptool-windows-x86_64\espsecure.exe" KeyPath="yes" Checksum="yes" />
+            <File Id="EspsecureExeFile" Source="..\..\..\..\..\vendor\esptool-windows-x86_64\espsecure.exe" KeyPath="yes" Checksum="yes" />
           </Component>
           <Component Id="EspRfc2217Exe" Guid="*">
-            <File Source="..\..\..\..\..\vendor\esptool-windows-x86_64\esp_rfc2217_server.exe" KeyPath="yes" Checksum="yes" />
+            <File Id="EspRfc2217ExeFile" Source="..\..\..\..\..\vendor\esptool-windows-x86_64\esp_rfc2217_server.exe" KeyPath="yes" Checksum="yes" />
           </Component>
           <Component Id="EsptoolLicense" Guid="*">
-            <File Source="..\..\..\..\..\vendor\esptool-windows-x86_64\LICENSE" KeyPath="yes" />
+            <File Id="EsptoolLicenseFile" Source="..\..\..\..\..\vendor\esptool-windows-x86_64\LICENSE" KeyPath="yes" />
           </Component>
           <Component Id="EsptoolReadme" Guid="*">
-            <File Source="..\..\..\..\..\vendor\esptool-windows-x86_64\README.md" KeyPath="yes" />
+            <File Id="EsptoolReadmeFile" Source="..\..\..\..\..\vendor\esptool-windows-x86_64\README.md" KeyPath="yes" />
+          </Component>
+        </Directory>
+        <Directory Id="EspMonitorWinDir" Name="idf-monitor-windows-x86_64">
+          <Component Id="EspIdfMonitor" Guid="*">
+            <File Id="EspIdfMonitorFile" Source="..\..\..\..\..\vendor\idf-monitor-windows-x86_64\esp_idf_monitor.exe" KeyPath="yes" Checksum="yes" />
+          </Component>
+          <Component Id="EspIdfLicense" Guid="*">
+            <File Id="EspIdfLicenseFile" Source="..\..\..\..\..\vendor\idf-monitor-windows-x86_64\LICENSE" KeyPath="yes" />
+          </Component>
+          <Component Id="EspIdfReadme" Guid="*">
+            <File Id="EspIdfReadmeFile" Source="..\..\..\..\..\vendor\idf-monitor-windows-x86_64\README.md" KeyPath="yes" />
           </Component>
         </Directory>
       </Directory>

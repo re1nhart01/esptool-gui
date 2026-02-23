@@ -67,7 +67,24 @@ pub fn execute_and_listen(&mut self, app: tauri::AppHandle) {
     let elf  = self.firmware_elf.clone();
 
     let handle = std::thread::spawn(move || {
-        let pty_system = native_pty_system();
+        #[cfg(target_os = "windows")]
+        Self::execute_and_listen_win(app, monitor, port, baud, elf, stop_flag);
+
+        #[cfg(not(target_os = "windows"))]
+        Self::execute_and_listem_unix(app, monitor, port, baud, elf, stop_flag);
+    });
+
+    self.thread_handle = Some(handle);
+}
+
+#[cfg(not(target_os = "windows"))]
+pub fn execute_and_listem_unix(app: tauri::AppHandle,
+    monitor: PathBuf,
+    port: String,
+    baud: String,
+    elf: String,
+    stop_flag: Arc<AtomicBool>) {
+     let pty_system = native_pty_system();
         let pair = pty_system
             .openpty(PtySize { rows: 24, cols: 80, pixel_width: 0, pixel_height: 0 })
             .expect("Failed to open PTY");
@@ -90,7 +107,7 @@ pub fn execute_and_listen(&mut self, app: tauri::AppHandle) {
         let mut child = match pair.slave.spawn_command(cmd) {
             Ok(c) => c,
             Err(e) => {
-                let _ = app.emit("esp-tool-monitor", format!("spawn error: {e}"));
+                let _ = app.emit("esp-tool-monitor", format!("spawn error: {e}\n"));
                 return;
             }
         };
@@ -113,17 +130,73 @@ pub fn execute_and_listen(&mut self, app: tauri::AppHandle) {
                     let _ = app.emit("esp-tool-monitor", output);
                 }
                 Err(e) => {
-                    let _ = app.emit("esp-tool-monitor", format!("pty read error: {e}"));
+                    let _ = app.emit("esp-tool-monitor", format!("pty read error: {e}\n"));
                     break;
                 }
             }
         }
 
         let _ = child.wait();
-    });
-
-    self.thread_handle = Some(handle);
 }
+
+
+#[cfg(target_os = "windows")]
+pub fn execute_and_listen_win(
+    app: tauri::AppHandle,
+    monitor: PathBuf,
+    port: String,
+    baud: String,
+    elf: String,
+    stop_flag: Arc<AtomicBool>) {
+        use std::process::{Command, Stdio};
+
+
+    let mut cmd = Command::new(&monitor);
+    cmd.env("PYTHONUNBUFFERED", "1");
+    cmd.env("PYTHONIOENCODING", "utf-8");
+    cmd.stdout(Stdio::piped());
+    cmd.stderr(Stdio::piped());
+
+    if !port.is_empty() { cmd.arg("--port").arg(&port); }
+    if !baud.is_empty() { cmd.arg("--baud").arg(&baud); }
+    if !elf.is_empty()  { cmd.arg(&elf); }
+
+    let mut child = match cmd.spawn() {
+        Ok(c) => c,
+        Err(e) => {
+            let _ = app.emit("esp-tool-monitor", format!("spawn error: {e}\n"));
+            return;
+        }
+    };
+
+    let mut stdout = child.stdout.take().expect("Failed to get stdout");
+    let mut buffer = [0u8; 4096];
+
+    loop {
+        if stop_flag.load(Ordering::Relaxed) {
+            let _ = child.kill();
+            break;
+        }
+
+        match stdout.read(&mut buffer) {
+            Ok(0) => {
+                let _ = app.emit("esp-tool-monitor", "Monitor exited\n".to_string());
+                break;
+            }
+            Ok(n) => {
+                let output = String::from_utf8_lossy(&buffer[..n]).to_string();
+                let _ = app.emit("esp-tool-monitor", output);
+            }
+            Err(e) => {
+                let _ = app.emit("esp-tool-monitor", format!("read error: {e}\n"));
+                break;
+            }
+        }
+    }
+
+    let _ = child.wait();
+}
+
 
     pub fn stop_listen(&mut self) {
         self.stop_flag.store(true, Ordering::Relaxed);
