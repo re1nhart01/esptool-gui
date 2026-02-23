@@ -25,6 +25,8 @@ pub struct Config {
     pub storage_start: String,
     pub ota_initial_data_start: String,
     pub about: About,
+    pub monitor_baud: String,
+    pub monitor_port: String,
 }
 
 impl Config {
@@ -48,6 +50,8 @@ impl Config {
             flash_size: String::from("8MB"),
             storage_start: String::from("0x320000"),
             ota_initial_data_start: String::from("0x10000"),
+            monitor_baud: String::from(""),
+            monitor_port: String::from("115200")
         };
     }
 

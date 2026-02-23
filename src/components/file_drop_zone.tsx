@@ -20,7 +20,7 @@ export function FileDropZone({ label, file, onSelect }: Props) {
     try {
       const filepath = await open({
         multiple: false,
-        filters: [{ name: "Bin Files", extensions: ["zip"] }],
+        filters: [{ name: "Bin Files", extensions: ["zip", "elf"] }],
       });
       if (typeof filepath === "string") onSelect(filepath);
     } catch (e) {
