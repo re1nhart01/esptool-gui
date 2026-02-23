@@ -10,11 +10,13 @@ use std::{
     thread::JoinHandle,
 };
 
-use tauri::Emitter;
+use tauri::{Emitter};
 
-use crate::{config::Config, constants, zipper::Zipper};
+use crate::{config::Config, constants, monitor::Monitor, serial::get_list_serial_ports, zipper::Zipper};
 
 pub static ESP_TOOL: OnceLock<Mutex<EspTool>> = OnceLock::new();
+pub static ESP_MONITOR: OnceLock<Mutex<Monitor>> = OnceLock::new();
+
 const CONFIG_FILENAME: &str = "esp-gui.config.json";
 
 #[derive(Clone, Debug)]
@@ -26,6 +28,8 @@ struct EspToolState {
     storage_path: String,
     ota_data_initial_path: String,
     unpacked_dir: String,
+    firmware_elf: String,
+    selected_port: String,
 }
 
 pub struct EspTool {
@@ -40,13 +44,15 @@ impl EspTool {
             thread_handle: None,
             stop_flag: Arc::new(AtomicBool::new(true)),
             state: EspToolState {
-                bootloader_path: String::from(""),
-                firmware_path: String::from(""),
-                partition_table_path: String::from(""),
-                archive_path: String::from(""),
-                storage_path: String::from(""),
-                ota_data_initial_path: String::from(""),
-                unpacked_dir: String::from(""),
+                bootloader_path: "".into(),
+                firmware_path: "".into(),
+                partition_table_path: "".into(),
+                archive_path: "".into(),
+                storage_path: "".into(),
+                ota_data_initial_path: "".into(),
+                unpacked_dir: "".into(),
+                firmware_elf: "".into(),
+                selected_port: "".into(),
             },
         };
     }
@@ -73,6 +79,8 @@ impl EspTool {
             self.state.ota_data_initial_path = filename;
         } else if file_type == constants::ESP_FILE_TYPE_UNPACKED_DIR {
             self.state.unpacked_dir = filename;
+        } else if file_type == constants::ESP_FILE_FIRMWARE_ELF {
+            self.state.firmware_elf = filename;
         }
 
         return true;
@@ -212,6 +220,11 @@ impl EspTool {
             args.push(config.baud_rate.to_string());
             args.push("--before".into());
 
+            if !state.selected_port.is_empty() {
+                args.push("--port".into());
+                args.push(state.selected_port);
+            }
+
             args.extend(config.before_flags.clone());
 
             args.push("--after".into());
@@ -326,4 +339,38 @@ pub fn tauri_update_config_data(new_cfg: Config) -> bool {
     let rs_path = Path::new(&cwd);
 
     return esptool.get_config().0.update_config(new_cfg, &rs_path);
+}
+
+#[tauri::command]
+pub fn tauri_monitor_start(app_handle: tauri::AppHandle) {
+    let app = ESP_TOOL.get().unwrap().lock().unwrap();
+
+    let mut monitor = ESP_MONITOR.get().unwrap().lock().unwrap();
+
+    monitor.set_baudrate(app.get_config().0.monitor_baud);
+    monitor.set_firmware_elf(app.state.firmware_elf.clone());
+
+    monitor.execute_and_listen(app_handle);
+}
+
+#[tauri::command]
+pub fn tauri_monitor_stop() {
+    let mut monitor = ESP_MONITOR.get().unwrap().lock().unwrap();
+
+    monitor.stop_listen();
+}
+
+#[tauri::command]
+pub fn tauri_get_serial_ports() -> String {
+    return get_list_serial_ports();
+}
+
+
+#[tauri::command]
+pub fn tauri_set_selected_port(selected: String) {
+    let mut app = ESP_TOOL.get().unwrap().lock().unwrap();
+    let mut monitor = ESP_MONITOR.get().unwrap().lock().unwrap();
+
+    app.state.selected_port = selected.clone(); 
+    monitor.set_port(selected);
 }

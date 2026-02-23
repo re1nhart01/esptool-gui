@@ -4,6 +4,8 @@ mod app;
 mod config;
 mod constants;
 mod zipper;
+mod monitor;
+mod serial;
 
 use std::sync::Mutex;
 
@@ -19,6 +21,10 @@ pub fn run() {
             app::tauri_add_file_into_scope,
             app::tauri_get_config_data,
             app::tauri_update_config_data,
+            app::tauri_monitor_start,
+            app::tauri_monitor_stop,
+            app::tauri_get_serial_ports,
+            app::tauri_set_selected_port,
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");
@@ -26,8 +32,10 @@ pub fn run() {
 
 fn main() {
     let mut api = app::EspTool::new();
+    let monitor = monitor::Monitor::new();
     api.initial_create_config_file();
     let _ = app::ESP_TOOL.set(Mutex::new(api));
+    let _ = app::ESP_MONITOR.set(Mutex::new(monitor));
 
     run();
 }

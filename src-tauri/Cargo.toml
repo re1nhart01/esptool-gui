@@ -18,3 +18,5 @@ tauri-plugin-fs = "2.4.4"
 serde = { version = "1.0.219", features = ["derive"] }
 serde_json = { version = "1.0.143" }
 zip = "7.0.0"
+portable-pty = "0.9.0"
+serialport = "4.8.1"

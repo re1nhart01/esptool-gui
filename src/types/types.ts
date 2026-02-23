@@ -20,3 +20,9 @@ export interface Config {
   ota_initial_data_start: string;
   about: About;
 }
+
+
+export interface SerialPort {
+  key: string;
+  value: string;
+}
